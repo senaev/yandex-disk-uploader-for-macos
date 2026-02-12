@@ -1,2 +1,2 @@
-# yandex-disk-uploader-for-macos
-Yandex disk uploader for MacOS
+# Yandex Disk Uploader for MacOS
+
