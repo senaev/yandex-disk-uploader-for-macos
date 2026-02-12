@@ -17,9 +17,14 @@ struct Yandex_Disk_UploaderApp: App {
             MenuBarView()
         }
         
-        // Окно настроек (открывается по требованию)
-        Settings {
+        // Окно настроек (id для openWindow и для поиска по NSApp.windows)
+        Window("Settings", id: "settings") {
             ContentView()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .commands {
+            CommandGroup(replacing: .newItem) { }
         }
     }
 }
@@ -27,18 +32,22 @@ struct Yandex_Disk_UploaderApp: App {
 // Делегат для управления поведением приложения
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Проверяем, нужно ли открыть настройки (флаг от extension)
         if UserDefaults.standard.bool(forKey: "shouldOpenSettingsOnLaunch") {
-            // Сбрасываем флаг
             UserDefaults.standard.set(false, forKey: "shouldOpenSettingsOnLaunch")
             UserDefaults.standard.synchronize()
-            
-            // Открываем настройки
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 self.openSettings()
             }
         } else {
-            // Обычный запуск - ничего не открываем, просто регистрируем extension
+            // Скрываем окно настроек при обычном запуске
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                for window in NSApp.windows {
+                    if window.identifier?.rawValue == "settings" || window.title == "Settings" {
+                        window.orderOut(nil)
+                        break
+                    }
+                }
+            }
         }
     }
     
@@ -55,10 +64,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
     
+    func application(_ application: NSApplication, open urls: [URL]) {
+        // Обработка URL scheme: yandexdiskuploader://settings
+        for url in urls where url.scheme == "yandexdiskuploader" && url.host == "settings" {
+            openSettings()
+            return
+        }
+    }
+    
     func openSettings() {
         NSApp.setActivationPolicy(.regular)
-        // Открываем окно настроек (⌘,)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         NSApp.activate(ignoringOtherApps: true)
+        
+        // Открываем окно настроек по id или по заголовку (без приватного API)
+        DispatchQueue.main.async {
+            for window in NSApp.windows {
+                if window.identifier?.rawValue == "settings" || window.title == "Settings" {
+                    window.makeKeyAndOrderFront(nil)
+                    return
+                }
+            }
+        }
     }
 }

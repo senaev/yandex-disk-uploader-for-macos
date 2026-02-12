@@ -105,15 +105,9 @@ class ShareViewController: NSViewController {
         UserDefaults.standard.set(true, forKey: "shouldOpenSettingsOnLaunch")
         UserDefaults.standard.synchronize()
         
-        // Open the main app
-        let bundleURL = Bundle.main.bundleURL
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("Yandex Disk Uploader.app")
-        
-        NSWorkspace.shared.open(bundleURL)
+        // Открываем основное приложение через URL scheme (работает из песочницы)
+        guard let url = URL(string: "yandexdiskuploader://settings") else { return }
+        NSWorkspace.shared.open(url)
         
         // Cancel the share request
         let cancelError = NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError, userInfo: nil)

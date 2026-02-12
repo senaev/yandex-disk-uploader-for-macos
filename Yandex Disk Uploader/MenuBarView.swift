@@ -8,10 +8,13 @@
 import SwiftUI
 
 struct MenuBarView: View {
+    @Environment(\.openWindow) private var openWindow
+    
     var body: some View {
         VStack(spacing: 0) {
             Button {
-                (NSApp.delegate as? AppDelegate)?.openSettings()
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "settings")
             } label: {
                 Label("Settings...", systemImage: "gear")
             }
