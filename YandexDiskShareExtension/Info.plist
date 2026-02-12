@@ -8,11 +8,17 @@
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
+			<key>NSExtensionServiceTouchBarLabel</key>
+			<string>Send to Yandex Disk</string>
+			<key>NSExtensionServiceToolbarPaletteLabel</key>
+			<string>Send to Yandex Disk</string>
 			<key>NSExtensionActivationRule</key>
 			<dict>
 				<key>NSExtensionActivationSupportsFileWithMaxCount</key>
 				<integer>10</integer>
 			</dict>
+			<key>NSExtensionServiceFinderPreviewLabel</key>
+			<string>Send to Yandex Disk</string>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.share-services</string>
