@@ -12,7 +12,12 @@ struct Yandex_Disk_UploaderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
-        // Settings вместо Window - не открывается автоматически при первом запуске
+        // Иконка облака в верхней панели с контекстным меню
+        MenuBarExtra("Yandex Disk Uploader", systemImage: "icloud.and.arrow.up") {
+            MenuBarView()
+        }
+        
+        // Окно настроек (открывается по требованию)
         Settings {
             ContentView()
         }
