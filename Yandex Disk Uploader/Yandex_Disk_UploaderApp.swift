@@ -12,6 +12,20 @@ extension Notification.Name {
     static let openSettingsWindow = Notification.Name("openSettingsWindow")
 }
 
+/// Показать окно настроек: если уже открыто — вывести на передний план, иначе открыть через openWindow.
+private func showSettingsWindow(openWindow: OpenWindowAction) {
+    for w in NSApp.windows {
+        if w.identifier?.rawValue == "settings" || w.title == "Yandex Disk Uploader" {
+            if w.isVisible {
+                w.makeKeyAndOrderFront(nil)
+                return
+            }
+            break
+        }
+    }
+    openWindow(id: "settings")
+}
+
 @main
 struct Yandex_Disk_UploaderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -47,16 +61,14 @@ struct MenuBarContent: View {
         Button("Settings...") {
             NSApp.setActivationPolicy(.accessory)
             NSApp.activate(ignoringOtherApps: true)
-            openWindow(id: "settings")
+            showSettingsWindow(openWindow: openWindow)
         }
-        .keyboardShortcut(",", modifiers: .command)
         
         Divider()
 
         Button("Quit") {
             NSApplication.shared.terminate(nil)
         }
-        .keyboardShortcut("q", modifiers: .command)
     }
 }
 
@@ -70,8 +82,7 @@ struct OpenSettingsListener: View {
             .onReceive(NotificationCenter.default.publisher(for: .openSettingsWindow)) { _ in
                 NSApp.setActivationPolicy(.accessory)
                 NSApp.activate(ignoringOtherApps: true)
-                openWindow(id: "settings")
-                // После показа окна снова фиксируем accessory (иногда система переключает на .regular)
+                showSettingsWindow(openWindow: openWindow)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     NSApp.setActivationPolicy(.accessory)
                 }
@@ -81,36 +92,43 @@ struct OpenSettingsListener: View {
 
 // Делегат: всегда accessory — без иконки в Dock
 class AppDelegate: NSObject, NSApplicationDelegate {
+    /// true, если приложение запущено по URL (Share) — не скрывать окно настроек в отложенном блоке
+    static var openedViaSettingsURL = false
+
     func applicationWillFinishLaunching(_ notification: Notification) {
-        // Как можно раньше, чтобы при запуске по URL не появиться в Dock
         NSApp.setActivationPolicy(.accessory)
     }
-    
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        // Скрываем оба окна при старте (настройки и слушатель)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        // Скрываем окна при старте; если открыто по URL — не трогаем окно настроек
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            let hideSettings = !Self.openedViaSettingsURL
+            Self.openedViaSettingsURL = false
             for w in NSApp.windows {
-                if w.identifier?.rawValue == "settings" || w.identifier?.rawValue == "listener" || w.title == "Yandex Disk Uploader" {
+                if w.identifier?.rawValue == "listener" {
+                    w.orderOut(nil)
+                } else if hideSettings && (w.identifier?.rawValue == "settings" || w.title == "Yandex Disk Uploader") {
                     w.orderOut(nil)
                 }
             }
         }
     }
-    
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
             NotificationCenter.default.post(name: .openSettingsWindow, object: nil)
         }
         return true
     }
-    
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }
-    
+
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls where url.scheme == "yandexdiskuploader" && url.host == "settings" {
+            Self.openedViaSettingsURL = true
             NSApp.setActivationPolicy(.accessory)
             UserDefaults.standard.set(false, forKey: "shouldOpenSettingsOnLaunch")
             DispatchQueue.main.async {
