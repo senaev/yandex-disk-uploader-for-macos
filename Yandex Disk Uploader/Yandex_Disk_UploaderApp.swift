@@ -52,14 +52,7 @@ struct MenuBarContent: View {
         .keyboardShortcut(",", modifiers: .command)
         
         Divider()
-        
-        Button("About") {
-            NSApp.orderFrontStandardAboutPanel(nil)
-            NSApp.activate(ignoringOtherApps: true)
-        }
-        
-        Divider()
-        
+
         Button("Quit") {
             NSApplication.shared.terminate(nil)
         }
