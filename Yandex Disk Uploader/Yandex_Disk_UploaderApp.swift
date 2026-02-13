@@ -45,6 +45,7 @@ struct MenuBarContent: View {
     
     var body: some View {
         Button("Settings...") {
+            NSApp.setActivationPolicy(.accessory)
             NSApp.activate(ignoringOtherApps: true)
             openWindow(id: "settings")
         }
@@ -74,14 +75,24 @@ struct OpenSettingsListener: View {
         Color.clear
             .frame(width: 1, height: 1)
             .onReceive(NotificationCenter.default.publisher(for: .openSettingsWindow)) { _ in
+                NSApp.setActivationPolicy(.accessory)
                 NSApp.activate(ignoringOtherApps: true)
                 openWindow(id: "settings")
+                // После показа окна снова фиксируем accessory (иногда система переключает на .regular)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    NSApp.setActivationPolicy(.accessory)
+                }
             }
     }
 }
 
-// Делегат: accessory, при запуске скрываем окно, по URL — шлём уведомление
+// Делегат: всегда accessory — без иконки в Dock
 class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Как можно раньше, чтобы при запуске по URL не появиться в Dock
+        NSApp.setActivationPolicy(.accessory)
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         // Скрываем оба окна при старте (настройки и слушатель)
@@ -107,6 +118,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls where url.scheme == "yandexdiskuploader" && url.host == "settings" {
+            NSApp.setActivationPolicy(.accessory)
             UserDefaults.standard.set(false, forKey: "shouldOpenSettingsOnLaunch")
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: .openSettingsWindow, object: nil)
