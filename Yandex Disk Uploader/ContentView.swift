@@ -16,7 +16,7 @@ struct ContentView: View {
             // Header
             VStack(spacing: 4) {
                 Image(systemName: "icloud.and.arrow.up.fill")
-                    .font(.system(size: 20))
+                    .font(.system(size: 35))
                     .foregroundStyle(.blue)
 
                 Text("Yandex Disk Uploader")
@@ -30,13 +30,22 @@ struct ContentView: View {
                 uploadFolder: $uploadFolder
             )
 
-            Divider()
-                .padding(.vertical, 8)
+            HStack(spacing: 12) {
+                Button("Quit") {
+                    NSApplication.shared.terminate(nil)
+                }
 
-            Button("Quit") {
-                NSApplication.shared.terminate(nil)
+                Button("Save") {
+                    UserDefaults.standard.synchronize()
+                    for w in NSApp.windows {
+                        if w.identifier?.rawValue == "settings" || w.title == "Yandex Disk Uploader" {
+                            w.close()
+                            break
+                        }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
             }
-            .keyboardShortcut("q", modifiers: .command)
             .padding(.bottom, 12)
         }
         .frame(width: 500)
@@ -73,8 +82,6 @@ struct SettingsTabView: View {
                     .buttonStyle(.borderedProminent)
                 }
                 .padding(10)
-            } label: {
-                Label("Account", systemImage: "person.circle")
             }
             
             // Upload folder
@@ -88,8 +95,6 @@ struct SettingsTabView: View {
                         .textFieldStyle(.roundedBorder)
                 }
                 .padding(10)
-            } label: {
-                Label("Upload Settings", systemImage: "folder")
             }
         }
         .padding(20)
