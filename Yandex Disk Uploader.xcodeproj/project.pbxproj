@@ -40,6 +40,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CC1E5D332F3F58AE001261BA /* Exceptions for "Yandex Disk Uploader" folder in "Yandex Disk Uploader" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CC2DC3A12F3E2D9D0003167A /* Yandex Disk Uploader */;
+		};
 		CC2DC3CA2F3E2E2A0003167A /* Exceptions for "YandexDiskShareExtension" folder in "YandexDiskShareExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -52,6 +59,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CC2DC3A42F3E2D9D0003167A /* Yandex Disk Uploader */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CC1E5D332F3F58AE001261BA /* Exceptions for "Yandex Disk Uploader" folder in "Yandex Disk Uploader" target */,
+			);
 			path = "Yandex Disk Uploader";
 			sourceTree = "<group>";
 		};
