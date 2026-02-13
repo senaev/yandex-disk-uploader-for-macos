@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @AppStorage("uploadFolder") private var uploadFolder = "/uploads"
-    @AppStorage("isAuthorized") private var isAuthorized = false
+    @EnvironmentObject private var authService: YandexAuthService
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,7 +26,7 @@ struct ContentView: View {
             .padding(.bottom, 4)
 
             SettingsTabView(
-                isAuthorized: $isAuthorized,
+                authService: authService,
                 uploadFolder: $uploadFolder
             )
 
@@ -53,31 +53,39 @@ struct ContentView: View {
 }
 
 struct SettingsTabView: View {
-    @Binding var isAuthorized: Bool
+    @ObservedObject var authService: YandexAuthService
     @Binding var uploadFolder: String
-    
+
     var body: some View {
         VStack(spacing: 20) {
             // Authorization status
             GroupBox {
                 HStack(spacing: 15) {
-                    Image(systemName: isAuthorized ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    Image(systemName: authService.isAuthorized ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .font(.system(size: 40))
-                        .foregroundColor(isAuthorized ? .green : .red)
-                    
+                        .foregroundColor(authService.isAuthorized ? .green : .red)
+
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(isAuthorized ? "Authorized" : "Not Authorized")
+                        Text(authService.isAuthorized ? "Authorized" : "Not Authorized")
                             .font(.headline)
-                        Text(isAuthorized ? "Connected to Yandex Disk" : "Click Authorize to connect")
+                        Text(authService.isAuthorized ? "Connected to Yandex Disk" : "Click Authorize to connect in the browser")
                             .font(.caption)
                             .foregroundColor(.secondary)
+                        if let error = authService.authError {
+                            Text(error)
+                                .font(.caption2)
+                                .foregroundColor(.red)
+                        }
                     }
-                    
+
                     Spacer()
-                    
-                    Button(isAuthorized ? "Disconnect" : "Authorize") {
-                        // TODO: Реализовать OAuth
-                        isAuthorized.toggle()
+
+                    Button(authService.isAuthorized ? "Disconnect" : "Authorize") {
+                        if authService.isAuthorized {
+                            authService.disconnect()
+                        } else {
+                            authService.startAuthorization()
+                        }
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -103,4 +111,5 @@ struct SettingsTabView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(YandexAuthService.shared)
 }

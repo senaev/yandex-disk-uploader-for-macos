@@ -4,6 +4,10 @@
 <dict>
 	<key>LSUIElement</key>
 	<true/>
+	<key>YandexOAuthClientID</key>
+	<string>YOUR_CLIENT_ID</string>
+	<key>YandexOAuthClientSecret</key>
+	<string>YOUR_CLIENT_SECRET</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

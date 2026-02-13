@@ -38,6 +38,7 @@ struct Yandex_Disk_UploaderApp: App {
         // Окно настроек — открывается через openWindow (меню или по URL)
         Window("Yandex Disk Uploader", id: "settings") {
             ContentView()
+                .environmentObject(YandexAuthService.shared)
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
@@ -62,6 +63,13 @@ struct MenuBarContent: View {
             NSApp.setActivationPolicy(.accessory)
             NSApp.activate(ignoringOtherApps: true)
             showSettingsWindow(openWindow: openWindow)
+        }
+
+        Divider()
+
+        Button("About") {
+            NSApp.orderFrontStandardAboutPanel(nil)
+            NSApp.activate(ignoringOtherApps: true)
         }
         
         Divider()
@@ -127,14 +135,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls where url.scheme == "yandexdiskuploader" && url.host == "settings" {
-            Self.openedViaSettingsURL = true
-            NSApp.setActivationPolicy(.accessory)
-            UserDefaults.standard.set(false, forKey: "shouldOpenSettingsOnLaunch")
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: .openSettingsWindow, object: nil)
+        for url in urls where url.scheme == "yandexdiskuploader" {
+            if url.host == "oauth" {
+                NSApp.setActivationPolicy(.accessory)
+                NSApp.activate(ignoringOtherApps: true)
+                _ = YandexAuthService.shared.handleCallback(url: url)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .openSettingsWindow, object: nil)
+                }
+                return
             }
-            return
+            if url.host == "settings" {
+                Self.openedViaSettingsURL = true
+                NSApp.setActivationPolicy(.accessory)
+                UserDefaults.standard.set(false, forKey: "shouldOpenSettingsOnLaunch")
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .openSettingsWindow, object: nil)
+                }
+                return
+            }
         }
     }
 }
