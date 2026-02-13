@@ -52,6 +52,15 @@ struct ContentView: View {
             }
             .tabViewStyle(.automatic)
             .frame(height: 300)
+            
+            Divider()
+                .padding(.vertical, 8)
+            
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+            .keyboardShortcut("q", modifiers: .command)
+            .padding(.bottom, 12)
         }
         .frame(width: 500, height: 450)
     }

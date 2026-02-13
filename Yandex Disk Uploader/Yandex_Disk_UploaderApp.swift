@@ -6,53 +6,31 @@
 //
 
 import SwiftUI
+import AppKit
 
 @main
 struct Yandex_Disk_UploaderApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
-        // Иконка облака в верхней панели с контекстным меню
+        // Иконка в menu bar, по клику — панель с настройками (не показывается в Dock)
         MenuBarExtra("Yandex Disk Uploader", systemImage: "icloud.and.arrow.up") {
-            MenuBarView()
-        }
-        
-        // Окно настроек (id для openWindow и для поиска по NSApp.windows)
-        Window("Settings", id: "settings") {
             ContentView()
+                .frame(width: 500, height: 450)
         }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
-        .commands {
-            CommandGroup(replacing: .newItem) { }
-        }
+        .menuBarExtraStyle(.window)
     }
 }
 
-// Делегат для управления поведением приложения
+// Делегат: только menu bar, без окна в Dock
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private var settingsPanel: NSPanel?
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if UserDefaults.standard.bool(forKey: "shouldOpenSettingsOnLaunch") {
-            UserDefaults.standard.set(false, forKey: "shouldOpenSettingsOnLaunch")
-            UserDefaults.standard.synchronize()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self.openSettings()
-            }
-        } else {
-            // Скрываем окно настроек при обычном запуске
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                for window in NSApp.windows {
-                    if window.identifier?.rawValue == "settings" || window.title == "Settings" {
-                        window.orderOut(nil)
-                        break
-                    }
-                }
-            }
-        }
+        NSApp.setActivationPolicy(.accessory)
     }
     
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        // При клике на иконку в Dock открываем настройки
         if !flag {
             openSettings()
         }
@@ -60,30 +38,45 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        // Закрывать приложение при закрытии последнего окна
-        return true
+        return false
     }
     
     func application(_ application: NSApplication, open urls: [URL]) {
-        // Обработка URL scheme: yandexdiskuploader://settings
         for url in urls where url.scheme == "yandexdiskuploader" && url.host == "settings" {
-            openSettings()
+            UserDefaults.standard.set(false, forKey: "shouldOpenSettingsOnLaunch")
+            DispatchQueue.main.async {
+                self.openSettings()
+            }
             return
         }
     }
     
     func openSettings() {
-        NSApp.setActivationPolicy(.regular)
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { self.openSettings() }
+            return
+        }
         NSApp.activate(ignoringOtherApps: true)
         
-        // Открываем окно настроек по id или по заголовку (без приватного API)
-        DispatchQueue.main.async {
-            for window in NSApp.windows {
-                if window.identifier?.rawValue == "settings" || window.title == "Settings" {
-                    window.makeKeyAndOrderFront(nil)
-                    return
-                }
-            }
+        if let panel = settingsPanel, panel.isVisible {
+            panel.makeKeyAndOrderFront(nil)
+            return
         }
+        
+        let panel = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 450),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        panel.title = "Yandex Disk Uploader"
+        panel.isFloatingPanel = true
+        panel.becomesKeyOnlyIfNeeded = false
+        panel.hidesOnDeactivate = false
+        panel.contentViewController = NSHostingController(rootView: ContentView())
+        panel.center()
+        
+        settingsPanel = panel
+        panel.makeKeyAndOrderFront(nil)
     }
 }
